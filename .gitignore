@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+.DS_Store?
+._*
+
+# IDE
+.idea/
+
+# IntelliJ Inspect Code exports
+errors/

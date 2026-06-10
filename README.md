@@ -6,6 +6,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.3-6DB33F?logo=spring&logoColor=white)
 
 ## 📋 Table of Contents
+<!-- noinspection MarkdownUnresolvedHeaderReference -->
 * [👋 Introduction](#introduction)
 * [💻 Technologies](#technologies)
 * [✨ Features](#features)
@@ -28,6 +29,7 @@ RentACar is a robust Spring Boot application for managing a car rental service. 
 * MapStruct
 * SpringDoc OpenAPI
 * Notion (Project Planning)
+<!-- noinspection SpellCheckingInspection -->
 * APIdog (API Testing)
 * Postman (API Testing)
 * DBeaver (Database Management)

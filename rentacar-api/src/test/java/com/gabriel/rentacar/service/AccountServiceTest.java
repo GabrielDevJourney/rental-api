@@ -8,6 +8,7 @@ import com.gabriel.rentacar.enums.UserRole;
 import com.gabriel.rentacar.exception.accountException.*;
 import com.gabriel.rentacar.mapper.AccountMapper;
 import com.gabriel.rentacar.repository.AccountRepository;
+import com.gabriel.rentacar.utils.EmailValidation;
 import com.gabriel.rentacar.utils.PasswordValidation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
@@ -25,6 +27,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings({"NullableProblems", "unused", "SpellCheckingInspection"})
 @ExtendWith(MockitoExtension.class)
 class AccountServiceTest {
 
@@ -37,10 +40,13 @@ class AccountServiceTest {
 	@Mock
 	private PasswordValidation passwordValidator;
 
+	@Spy
+	private EmailValidation emailValidator;
+
 	@InjectMocks
 	private AccountService accountService;
 
-	private Long accountId = 1L;
+	private final Long accountId = 1L;
 	private AccountDto accountDto;
 	private AccountEntity inactiveAccountEntity;
 	private AccountEntity activeAccountEntity;
@@ -123,9 +129,7 @@ class AccountServiceTest {
 		when(accountRepository.existsByEmail(existsEmail)).thenReturn(true);
 
 		// Act & Assert
-		assertThrows(AccountEmailAlreadyExistsException.class, () -> {
-			accountService.createAccount(accountDto);
-		});
+		assertThrows(AccountEmailAlreadyExistsException.class, () -> accountService.createAccount(accountDto));
 
 		// Verify
 		verify(accountRepository, times(1)).existsByEmail(existsEmail);
@@ -141,7 +145,7 @@ class AccountServiceTest {
 
 		// Act & Assert
 		assertThrows(
-				AccountInvalidNameFormat.class,
+				AccountInvalidNameFormatException.class,
 				() -> accountService.createAccount(accountDto)
 		);
 	}
@@ -155,7 +159,7 @@ class AccountServiceTest {
 
 		// Act & Assert
 		assertThrows(
-				AccountInvalidNameFormat.class,
+				AccountInvalidNameFormatException.class,
 				() -> accountService.createAccount(accountDto)
 		);
 	}
@@ -243,9 +247,7 @@ class AccountServiceTest {
 		when(passwordValidator.matches(confirmationDto.getPassword(), activeAccountEntity.getPassword())).thenReturn(true);
 
 		// Act & Assert
-		assertThrows(AccountAlreadyActiveException.class, () -> {
-			accountService.confirmAccount(confirmationDto.getEmail(), confirmationDto.getPassword());
-		});
+		assertThrows(AccountAlreadyActiveException.class, () -> accountService.confirmAccount(confirmationDto.getEmail(), confirmationDto.getPassword()));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -257,9 +259,7 @@ class AccountServiceTest {
 		when(passwordValidator.matches(confirmationDto.getPassword(), inactiveAccountEntity.getPassword())).thenReturn(false);
 
 		// Act & Assert
-		assertThrows(AccountInvalidPasswordException.class, () -> {
-			accountService.confirmAccount(confirmationDto.getEmail(), confirmationDto.getPassword());
-		});
+		assertThrows(AccountInvalidPasswordException.class, () -> accountService.confirmAccount(confirmationDto.getEmail(), confirmationDto.getPassword()));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -285,9 +285,7 @@ class AccountServiceTest {
 		when(accountRepository.findById(idToFailTest)).thenReturn(Optional.empty());
 
 		// Act & Assert
-		assertThrows(AccountNotFoundException.class, () -> {
-			accountService.deactivateAccount(idToFailTest);
-		});
+		assertThrows(AccountNotFoundException.class, () -> accountService.deactivateAccount(idToFailTest));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -298,9 +296,7 @@ class AccountServiceTest {
 		mockAccountLookup(inactiveAccountEntity);
 
 		// Act & Assert
-		assertThrows(AccountAlreadyDeactivatedException.class, () -> {
-			accountService.deactivateAccount(accountId);
-		});
+		assertThrows(AccountAlreadyDeactivatedException.class, () -> accountService.deactivateAccount(accountId));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -325,9 +321,7 @@ class AccountServiceTest {
 		when(accountRepository.findById(idToFailTest)).thenReturn(Optional.empty());
 
 		// Act & Assert
-		assertThrows(AccountNotFoundException.class, () -> {
-			accountService.deleteAccount(idToFailTest);
-		});
+		assertThrows(AccountNotFoundException.class, () -> accountService.deleteAccount(idToFailTest));
 
 		verify(accountRepository, never()).delete(any());
 	}
@@ -353,9 +347,7 @@ class AccountServiceTest {
 		when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
 		// Act & Assert
-		assertThrows(AccountNotFoundException.class, () -> {
-			accountService.updateFirstNameAndLastName(accountId, firstLastNameDto);
-		});
+		assertThrows(AccountNotFoundException.class, () -> accountService.updateFirstNameAndLastName(accountId, firstLastNameDto));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -400,9 +392,7 @@ class AccountServiceTest {
 		when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
 		// Act and Assert
-		assertThrows(AccountNotFoundException.class, () -> {
-			accountService.updateFullAccountDetails(accountId, accountDto);
-		});
+		assertThrows(AccountNotFoundException.class, () -> accountService.updateFullAccountDetails(accountId, accountDto));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -429,9 +419,7 @@ class AccountServiceTest {
 		when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
 		// Act & Assert
-		assertThrows(AccountNotFoundException.class, () -> {
-			accountService.updateAccountAge(accountId, newAge);
-		});
+		assertThrows(AccountNotFoundException.class, () -> accountService.updateAccountAge(accountId, newAge));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -443,9 +431,7 @@ class AccountServiceTest {
 		mockAccountLookup(activeAccountEntity);
 
 		// Act & Assert
-		assertThrows(AccountInvalidAgeException.class, () -> {
-			accountService.updateAccountAge(accountId, invalidAge);
-		});
+		assertThrows(AccountInvalidAgeException.class, () -> accountService.updateAccountAge(accountId, invalidAge));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -472,9 +458,7 @@ class AccountServiceTest {
 		when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
 		// Act & Assert
-		assertThrows(AccountNotFoundException.class, () -> {
-			accountService.updateAccountEmail(accountId, newEmail);
-		});
+		assertThrows(AccountNotFoundException.class, () -> accountService.updateAccountEmail(accountId, newEmail));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -487,9 +471,7 @@ class AccountServiceTest {
 		when(accountRepository.existsByEmail(newEmail)).thenReturn(true);
 
 		// Act & Assert
-		assertThrows(AccountEmailAlreadyExistsException.class, () -> {
-			accountService.updateAccountEmail(accountId, newEmail);
-		});
+		assertThrows(AccountEmailAlreadyExistsException.class, () -> accountService.updateAccountEmail(accountId, newEmail));
 
 		verify(accountRepository).findById(accountId);
 		verify(accountRepository).existsByEmail(newEmail);
@@ -518,9 +500,7 @@ class AccountServiceTest {
 		when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
 		// Act & Assert
-		assertThrows(AccountNotFoundException.class, () -> {
-			accountService.updateAccountPhoneNumber(accountId, newPhoneNumber);
-		});
+		assertThrows(AccountNotFoundException.class, () -> accountService.updateAccountPhoneNumber(accountId, newPhoneNumber));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -532,9 +512,7 @@ class AccountServiceTest {
 		mockAccountLookup(activeAccountEntity);
 
 		// Act & Assert
-		assertThrows(AccountInvalidNumberException.class, () -> {
-			accountService.updateAccountPhoneNumber(accountId, invalidPhoneNumber);
-		});
+		assertThrows(AccountInvalidNumberException.class, () -> accountService.updateAccountPhoneNumber(accountId, invalidPhoneNumber));
 
 		verify(accountRepository, never()).save(any());
 	}
@@ -543,8 +521,8 @@ class AccountServiceTest {
 	@Test
 	void when_GettingDeactivatedAccounts_then_Success() {
 		// Setup
-		List<AccountEntity> deactivatedAccounts = Arrays.asList(inactiveAccountEntity);
-		List<AccountDto> expectedDtos = Arrays.asList(accountDto);
+		List<AccountEntity> deactivatedAccounts = List.of(inactiveAccountEntity);
+		List<AccountDto> expectedDtos = List.of(accountDto);
 
 		when(accountRepository.findByActiveIsFalse()).thenReturn(deactivatedAccounts);
 		when(accountMapper.toDtoList(deactivatedAccounts)).thenReturn(expectedDtos);
@@ -562,7 +540,7 @@ class AccountServiceTest {
 	@Test
 	void when_GettingFirstNameAndLastNameOfDeactivatedAccounts_then_Success() {
 		// Setup
-		List<AccountEntity> deactivatedAccounts = Arrays.asList(inactiveAccountEntity);
+		List<AccountEntity> deactivatedAccounts = List.of(inactiveAccountEntity);
 
 		when(accountRepository.findByActiveIsFalseOrderByFirstNameAscLastNameAsc()).thenReturn(deactivatedAccounts);
 		when(accountMapper.toFirstLastNameDto(inactiveAccountEntity)).thenReturn(firstLastNameDto);
@@ -572,26 +550,24 @@ class AccountServiceTest {
 
 		// Assert
 		assertEquals(1, result.size());
-		assertEquals(firstLastNameDto, result.get(0));
+		assertEquals(firstLastNameDto, result.getFirst());
 		verify(accountRepository).findByActiveIsFalseOrderByFirstNameAscLastNameAsc();
 	}
 
 	// Tests for getAllAccounts
 	@Test
 	void when_GettingAllAccounts_then_Success() {
-		// Setup
 		List<AccountEntity> allAccounts = Arrays.asList(activeAccountEntity, inactiveAccountEntity);
-		List<AccountDto> expectedDtos = Arrays.asList(accountDto, accountDto);
+		org.springframework.data.domain.Page<AccountEntity> page =
+				new org.springframework.data.domain.PageImpl<>(allAccounts);
 
-		when(accountRepository.findAll()).thenReturn(allAccounts);
-		when(accountMapper.toDtoList(allAccounts)).thenReturn(expectedDtos);
+		when(accountRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+		when(accountMapper.toDto(activeAccountEntity)).thenReturn(accountDto);
+		when(accountMapper.toDto(inactiveAccountEntity)).thenReturn(accountDto);
 
-		// Act
-		List<AccountDto> result = accountService.getAllAccounts();
+		List<AccountDto> result = accountService.getAllAccounts(0, 20);
 
-		// Assert
-		assertEquals(expectedDtos, result);
-		verify(accountRepository).findAll();
-		verify(accountMapper).toDtoList(allAccounts);
+		assertNotNull(result);
+		assertEquals(2, result.size());
 	}
 }

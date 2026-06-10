@@ -10,12 +10,15 @@ import com.gabriel.rentacar.utils.PlateValidation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.Arrays;
@@ -23,12 +26,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings({"NullableProblems", "SpellCheckingInspection"})
 @ExtendWith(MockitoExtension.class)
 class VehicleServiceTest {
 
@@ -61,7 +61,7 @@ class VehicleServiceTest {
         vehicleDto.setModel("Corolla");
         vehicleDto.setColor("Black");
         vehicleDto.setYearManufacture(currentYear);
-        vehicleDto.setDailyRate(50.0);
+        vehicleDto.setDailyRate(new BigDecimal("50.00"));
         vehicleDto.setCurrentKilometers(1000);
         vehicleDto.setMaintenanceKilometers(5000);
 
@@ -73,7 +73,7 @@ class VehicleServiceTest {
         vehicleEntity.setModel("COROLLA");
         vehicleEntity.setColor("black");
         vehicleEntity.setYearManufacture(currentYear);
-        vehicleEntity.setDailyRate(50.0);
+        vehicleEntity.setDailyRate(new BigDecimal("50.00"));
         vehicleEntity.setStatus(VehicleStatus.AVAILABLE);
         vehicleEntity.setCurrentKilometers(1000);
         vehicleEntity.setMaintenanceKilometers(5000);
@@ -86,7 +86,7 @@ class VehicleServiceTest {
         rentedVehicleEntity.setModel("CIVIC");
         rentedVehicleEntity.setColor("blue");
         rentedVehicleEntity.setYearManufacture(currentYear - 1);
-        rentedVehicleEntity.setDailyRate(45.0);
+        rentedVehicleEntity.setDailyRate(new BigDecimal("45.00"));
         rentedVehicleEntity.setStatus(VehicleStatus.RENTED);
         rentedVehicleEntity.setCurrentKilometers(2000);
         rentedVehicleEntity.setMaintenanceKilometers(5000);
@@ -99,7 +99,7 @@ class VehicleServiceTest {
         maintenanceVehicleEntity.setModel("ALTIMA");
         maintenanceVehicleEntity.setColor("red");
         maintenanceVehicleEntity.setYearManufacture(currentYear - 2);
-        maintenanceVehicleEntity.setDailyRate(40.0);
+        maintenanceVehicleEntity.setDailyRate(new BigDecimal("40.00"));
         maintenanceVehicleEntity.setStatus(VehicleStatus.MAINTENANCE);
         maintenanceVehicleEntity.setCurrentKilometers(3000);
         maintenanceVehicleEntity.setMaintenanceKilometers(5000);
@@ -113,7 +113,7 @@ class VehicleServiceTest {
         disabledVehicleEntity.setModel("FOCUS");
         disabledVehicleEntity.setColor("white");
         disabledVehicleEntity.setYearManufacture(currentYear - 3);
-        disabledVehicleEntity.setDailyRate(35.0);
+        disabledVehicleEntity.setDailyRate(new BigDecimal("35.00"));
         disabledVehicleEntity.setStatus(VehicleStatus.DISABLE);
         disabledVehicleEntity.setCurrentKilometers(4000);
         disabledVehicleEntity.setMaintenanceKilometers(5000);
@@ -156,7 +156,7 @@ class VehicleServiceTest {
         vehicleDto.setYearManufacture(minYear - 1);
 
         // Act & Assert
-        assertThrows(VehicleInvalidYearOfManufacture.class,
+        assertThrows(VehicleInvalidYearOfManufactureException.class,
                 () -> vehicleService.createVehicle(vehicleDto));
     }
 
@@ -167,7 +167,7 @@ class VehicleServiceTest {
         vehicleDto.setYearManufacture(maxYear + 1);
 
         // Act & Assert
-        assertThrows(VehicleInvalidYearOfManufacture.class,
+        assertThrows(VehicleInvalidYearOfManufactureException.class,
                 () -> vehicleService.createVehicle(vehicleDto));
     }
 
@@ -239,17 +239,16 @@ class VehicleServiceTest {
 
     @Test
     void when_GettingAllVehicles_then_Success() {
-        // Setup
         List<VehicleEntity> vehicles = Arrays.asList(vehicleEntity, rentedVehicleEntity);
-        when(vehicleRepository.findAll()).thenReturn(vehicles);
-        when(vehicleMapper.toDtoList(vehicles)).thenReturn(Arrays.asList(vehicleDto, vehicleDto));
+        Page<VehicleEntity> vehiclePage = new PageImpl<>(vehicles);
+        when(vehicleRepository.findAll(any(Pageable.class))).thenReturn(vehiclePage);
+        when(vehicleMapper.toDto(vehicleEntity)).thenReturn(vehicleDto);
+        when(vehicleMapper.toDto(rentedVehicleEntity)).thenReturn(vehicleDto);
 
-        // Act
-        List<VehicleDto> result = vehicleService.getAllVehicles();
+        Page<VehicleDto> result = vehicleService.getAllVehicles(0, 20, "id");
 
-        // Assert
         assertNotNull(result);
-        assertEquals(2, result.size());
+        assertEquals(2, result.getTotalElements());
     }
 
     // ========== UPDATE STATUS TESTS ==========
@@ -324,7 +323,7 @@ class VehicleServiceTest {
 
         // Assert
         assertEquals(VehicleStatus.AVAILABLE, maintenanceVehicleEntity.getStatus());
-        assertNull(null);
+        assertNull(maintenanceVehicleEntity.getMaintenanceEndDate());
         verify(vehicleRepository).save(maintenanceVehicleEntity);
     }
 
@@ -375,6 +374,7 @@ class VehicleServiceTest {
         verify(vehicleRepository).save(vehicleEntity);
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Test
     void when_CompletingRental_with_NullVehicle_then_ThrowsException() {
         // Act & Assert
@@ -387,7 +387,7 @@ class VehicleServiceTest {
     @Test
     void when_UpdatingMaintenanceVehicles_with_EndDateToday_then_Success() {
         // Setup
-        List<VehicleEntity> maintenanceVehicles = Arrays.asList(maintenanceVehicleEntity);
+        List<VehicleEntity> maintenanceVehicles = List.of(maintenanceVehicleEntity);
         LocalDate today = LocalDate.now();
         maintenanceVehicleEntity.setMaintenanceEndDate(today);
 
@@ -405,7 +405,7 @@ class VehicleServiceTest {
     @Test
     void when_UpdatingMaintenanceVehicles_with_FutureEndDate_then_NotUpdated() {
         // Setup
-        List<VehicleEntity> maintenanceVehicles = Arrays.asList(maintenanceVehicleEntity);
+        List<VehicleEntity> maintenanceVehicles = List.of(maintenanceVehicleEntity);
         LocalDate future = LocalDate.now().plusDays(3);
         maintenanceVehicleEntity.setMaintenanceEndDate(future);
 

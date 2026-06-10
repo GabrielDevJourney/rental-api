@@ -3,14 +3,23 @@ package com.gabriel.rentacar.entity;
 import com.gabriel.rentacar.enums.RentalStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
+@SuppressWarnings("unused")
+@Getter
+@Setter
+@ToString(exclude = {"accountEntity", "vehicleEntity"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -20,6 +29,7 @@ public class RentalEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
+	@EqualsAndHashCode.Include
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -54,9 +64,9 @@ public class RentalEntity {
 		return endKilometers >= startKilometers;
 	}
 
-	@Column(name = "total_price")
-	@Min(value = 0, message = "Must be above zero")
-	private double totalPrice;
+	@Column(name = "total_price", precision = 10, scale = 2)
+	@DecimalMin(value = "0.00", message = "Must be above zero")
+	private BigDecimal totalPrice;
 
 
 	@Enumerated(EnumType.STRING)

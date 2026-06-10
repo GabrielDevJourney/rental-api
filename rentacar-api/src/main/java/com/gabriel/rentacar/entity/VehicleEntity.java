@@ -2,12 +2,20 @@ package com.gabriel.rentacar.entity;
 import com.gabriel.rentacar.enums.VehicleStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
+@SuppressWarnings("unused")
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -15,6 +23,7 @@ import java.time.LocalDate;
 public class VehicleEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@EqualsAndHashCode.Include
 	private Long id;
 
 	@Column(name = "brand", nullable = false)
@@ -26,14 +35,14 @@ public class VehicleEntity {
 	@Column(name = "color")
 	private String color;
 
-	@Column(name = "year")
+	@Column(name = "year_manufacture")
 	private int yearManufacture;
 
 	@Column(name = "plate", nullable = false, unique = true)
 	private String plate;
 
-	@Column(name = "daily_rate")
-	private double dailyRate;
+	@Column(name = "daily_rate", precision = 10, scale = 2)
+	private BigDecimal dailyRate;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)

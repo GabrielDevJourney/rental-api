@@ -16,8 +16,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
+@SuppressWarnings({"unused", "NullableProblems"})
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -44,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			try {
 				email = jwtTokenUtil.extractEmail(jwt);
 			} catch (Exception e) {
-				logger.error("Invalid JWT token: {}");
+				logger.error("Invalid JWT token", e);
 			}
 		}
 
@@ -57,8 +57,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 				//getting the list of authorized roles
 				List<GrantedAuthority> authorities = roles.stream()
-						.map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-						.collect(Collectors.toList());
+						.map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
+						.toList();
 
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 						userDetails, null, authorities);

@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 
+@SuppressWarnings({"unused", "NullableProblems"})
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 	private final AccountRepository accountRepository;

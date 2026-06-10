@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -21,5 +22,6 @@ public class RentalResponseDto {
 	private LocalDate dateReturn;
 	private int startKilometers;
 	private int endKilometers;
+	private BigDecimal totalPrice;
 	private RentalStatus rentalStatus;
 }

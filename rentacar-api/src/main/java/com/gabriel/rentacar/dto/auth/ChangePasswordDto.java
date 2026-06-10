@@ -1,5 +1,6 @@
 package com.gabriel.rentacar.dto.auth;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +11,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChangePasswordDto {
-	private String currentPassword;
-	private String newPassword;
 
+	@Schema(example = "User@1234!")
+	private String currentPassword;
+
+	@Schema(example = "NewPass@5678!")
+	private String newPassword;
 }

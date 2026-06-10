@@ -1,9 +1,6 @@
 package com.gabriel.rentacar.dto.account;
 
-import com.gabriel.rentacar.enums.UserRole;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,18 +13,22 @@ import org.hibernate.validator.constraints.Range;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountDto {
+
+	@Schema(example = "John")
 	@NotBlank(message = "Must have first name")
 	@Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
 	@Pattern(regexp = "^[a-zA-Z\\s'-]+$",
 			message = "First name can only contain letters, spaces, hyphens and apostrophes")
 	private String firstName;
 
+	@Schema(example = "Doe")
 	@NotBlank(message = "Must have last name")
 	@Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
 	@Pattern(regexp = "^[a-zA-Z\\s'-]+$",
 			message = "Last name can only contain letters, spaces, hyphens and apostrophes")
 	private String lastName;
 
+	@Schema(example = "john.doe@email.com")
 	@NotEmpty(message = "Must have email")
 	@Email(message = "Email format is invalid")
 	@Size(max = 100, message = "Email must be less than 100 characters")
@@ -35,17 +36,20 @@ public class AccountDto {
 			message = "Email format is invalid")
 	private String email;
 
+	@Schema(example = "NewUser@1234!")
 	@NotBlank(message = "Password is required")
 	@Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
 	@Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$",
 			message = "Password must contain at least one digit, one lowercase letter, one uppercase letter, and one special character")
 	private String password;
 
+	@Schema(example = "912345678")
 	@NotBlank(message = "Must have phone number")
 	@Pattern(regexp = "^(91|92|93|96)\\d{7}$",
 			message = "Invalid phone number format. Expected format:91 or 92 or 93 or 96.")
 	private String phoneNumber;
 
+	@Schema(example = "28")
 	@NotNull(message = "Must have age")
 	@Range(min = 18, max = 100, message = "Age must be between 18 and 100")
 	private Integer age;

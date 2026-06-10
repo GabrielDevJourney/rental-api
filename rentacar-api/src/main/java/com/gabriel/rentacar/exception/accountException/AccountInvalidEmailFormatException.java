@@ -1,9 +1,15 @@
 package com.gabriel.rentacar.exception.accountException;
 
 import com.gabriel.rentacar.exception.ValidationException;
+
+import java.io.Serial;
+
 import org.apache.commons.validator.routines.EmailValidator;
 
 public class AccountInvalidEmailFormatException extends ValidationException {
+
+	@Serial
+	private static final long serialVersionUID = 1L;
 
 	public AccountInvalidEmailFormatException(String email) {
 		super(String.format("Invalid email format: %s. %s", email, determineReason(email)),

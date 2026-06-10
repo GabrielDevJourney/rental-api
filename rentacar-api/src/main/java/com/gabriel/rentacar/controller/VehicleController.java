@@ -1,20 +1,21 @@
 package com.gabriel.rentacar.controller;
 
+import com.gabriel.rentacar.dto.common.ApiResponse;
 import com.gabriel.rentacar.dto.vehicle.VehicleDto;
 import com.gabriel.rentacar.enums.VehicleStatus;
-import com.gabriel.rentacar.exception.vehicleException.VehicleNotFoundException;
 import com.gabriel.rentacar.service.VehicleService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/vehicles")
+@SuppressWarnings({"unused", "NullableProblems"})
 public class VehicleController {
+
 	private final VehicleService vehicleService;
 
 	public VehicleController(VehicleService vehicleService) {
@@ -22,48 +23,44 @@ public class VehicleController {
 	}
 
 	@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-	@GetMapping("/search/{plate}")
-	public ResponseEntity<VehicleDto> getVehicleByPlate(@PathVariable String plate) {
+	@GetMapping("/search/plate/{plate}")
+	public ResponseEntity<ApiResponse<VehicleDto>> getVehicleByPlate(@PathVariable String plate) {
 		VehicleDto vehicle = vehicleService.findByPlate(plate);
-		return vehicle != null ? ResponseEntity.ok(vehicle) : ResponseEntity.notFound().build();
-	}
-	@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-	@GetMapping("/search/{vehicleId}")
-	public ResponseEntity<VehicleDto> getVehicleById(@PathVariable Long vehicleId) {
-		VehicleDto vehicle = vehicleService.getVehicleById(vehicleId);
-		return vehicle != null ? ResponseEntity.ok(vehicle) : ResponseEntity.notFound().build();
+		if (vehicle == null) {
+			return ResponseEntity.notFound().build();
+		}
+		return ApiResponse.ok("Vehicle retrieved", vehicle);
 	}
 
 	@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-	@GetMapping("/{vehicleId}/plate")
-	public ResponseEntity<String> getPlateById(@PathVariable Long vehicleId) {
-		VehicleDto vehicle = vehicleService.findById(vehicleId).orElseThrow(() -> new VehicleNotFoundException(vehicleId));
-		String plate = vehicle.getPlate();
-		return plate != null ? ResponseEntity.ok(plate) : ResponseEntity.notFound().build();
+	@GetMapping("/search/id/{vehicleId}")
+	public ResponseEntity<ApiResponse<VehicleDto>> getVehicleById(@PathVariable Long vehicleId) {
+		return ApiResponse.ok("Vehicle retrieved", vehicleService.getVehicleById(vehicleId));
 	}
+
 	@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
 	@GetMapping
-	public ResponseEntity<List<VehicleDto>> getAllVehicles() {
-		List<VehicleDto> vehicleDtoList = vehicleService.getAllVehicles();
-		return ResponseEntity.ok(vehicleDtoList);
+	public ResponseEntity<ApiResponse<Page<VehicleDto>>> getAllVehicles(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size,
+			@RequestParam(defaultValue = "id") String sort) {
+		return ApiResponse.ok("Vehicles retrieved", vehicleService.getAllVehicles(page, size, sort));
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping
-	public ResponseEntity<Void> createVehicle(@Valid @RequestBody VehicleDto vehicleDto) {
+	public ResponseEntity<ApiResponse<Void>> createVehicle(@Valid @RequestBody VehicleDto vehicleDto) {
 		vehicleService.createVehicle(vehicleDto);
-		return ResponseEntity.ok().build();
+		return ApiResponse.created("Vehicle created", null);
 	}
+
 	@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 	@Transactional
 	@PatchMapping("/{vehicleId}/status/{status}")
-	public ResponseEntity<Void> updateVehicleStatus(
+	public ResponseEntity<ApiResponse<Void>> updateVehicleStatus(
 			@PathVariable Long vehicleId,
 			@PathVariable VehicleStatus status) {
-
 		vehicleService.updateVehicleStatus(vehicleId, status);
-		return ResponseEntity.ok().build();
+		return ApiResponse.ok("Vehicle status updated", null);
 	}
-
-
 }

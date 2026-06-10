@@ -2,32 +2,33 @@ package com.gabriel.rentacar.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
 
+@SuppressWarnings("unused")
 @Component
 public class JwtTokenUtil {
 
+	@SuppressWarnings("unused")
 	@Value("${jwt.secret}")
 	private String secret;
 
+	@SuppressWarnings("unused")
 	@Value("${jwt.expiration}")
 	private long jwtExpiration;
 
 	private static final Logger logger = LoggerFactory.getLogger(JwtTokenUtil.class);
 
-	// Generate token for user
 	public String generateToken(String email, List<String> roles) {
-		logger.info("Generating token for user: {}", email);
+		logger.debug("Generating token for user: {}", email);
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("roles", roles);
 		return createToken(claims, email);
@@ -36,33 +37,29 @@ public class JwtTokenUtil {
 	private String createToken(Map<String, Object> claims, String subject) {
 		Date now = new Date();
 		Date expiryDate = new Date(now.getTime() + jwtExpiration);
-		Key key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+		SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
 
 		return Jwts.builder()
-				.setClaims(claims)
-				.setSubject(subject)
-				.setIssuedAt(now)
-				.setExpiration(expiryDate)
-				.signWith(key, SignatureAlgorithm.HS512)
+				.claims(claims)
+				.subject(subject)
+				.issuedAt(now)
+				.expiration(expiryDate)
+				.signWith(key, Jwts.SIG.HS512)
 				.compact();
 	}
 
-	// Validate token
 	public boolean validateToken(String token, String userEmail) {
 		final String email = extractEmail(token);
 		boolean isValid = email.equals(userEmail) && !isTokenExpired(token);
-		logger.info("Token validation for user: {} - Valid: {}", userEmail, isValid);
+		logger.debug("Token validation for user: {} - Valid: {}", userEmail, isValid);
 		return isValid;
 	}
 
-	// Extract email from token
 	public String extractEmail(String token) {
-		String email = extractClaim(token, Claims::getSubject);
-		logger.debug("Extracted email from token: {}", email);
-		return email;
+		return extractClaim(token, Claims::getSubject);
 	}
 
-	//Extract roles from token
+	@SuppressWarnings("unchecked")
 	public List<String> extractRoles(String token) {
 		try {
 			Claims claims = extractAllClaims(token);
@@ -74,39 +71,34 @@ public class JwtTokenUtil {
 		}
 	}
 
-	// Extract expiration date from token
 	public Date extractExpiration(String token) {
 		return extractClaim(token, Claims::getExpiration);
 	}
 
-
-	// Check if token has expired
-	private Boolean isTokenExpired(String token) {
+	private boolean isTokenExpired(String token) {
 		final Date expiration = extractExpiration(token);
 		boolean expired = expiration.before(new Date());
 		if (expired) {
-			logger.warn("Token has expired: {}", token);
+			logger.warn("Token has expired: {}...", token.substring(0, Math.min(10, token.length())));
 		}
 		return expired;
 	}
 
-	// Extract claim from token
 	public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
 		final Claims claims = extractAllClaims(token);
 		return claimsResolver.apply(claims);
 	}
 
-	// Extract all claims from token
 	private Claims extractAllClaims(String token) {
 		try {
-			Key key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-			return Jwts.parserBuilder()
-					.setSigningKey(key)
+			SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+			return Jwts.parser()
+					.verifyWith(key)
 					.build()
-					.parseClaimsJws(token)
-					.getBody();
+					.parseSignedClaims(token)
+					.getPayload();
 		} catch (Exception e) {
-			logger.error("Failed to extract claims from token: {}", token, e);
+			logger.error("Failed to extract claims from token: {}...", token.substring(0, Math.min(10, token.length())), e);
 			throw e;
 		}
 	}

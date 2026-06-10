@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+@SuppressWarnings({"unused", "NullableProblems"})
 @Repository
 public interface AccountRepository extends JpaRepository<AccountEntity,Long> {
 	boolean existsByEmail(String email);

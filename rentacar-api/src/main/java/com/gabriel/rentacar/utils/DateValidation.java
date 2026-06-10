@@ -1,6 +1,5 @@
 package com.gabriel.rentacar.utils;
 
-import com.gabriel.rentacar.dto.rent.RentalRequestDto;
 import com.gabriel.rentacar.entity.RentalEntity;
 import com.gabriel.rentacar.exception.rentalException.RentalInvalidRentingDatesException;
 import com.gabriel.rentacar.exception.rentalException.RentalOverlappingDatesException;
@@ -11,6 +10,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+@SuppressWarnings("unused")
 @Component
 public class DateValidation {
 	private final RentalRepository rentalRepository;

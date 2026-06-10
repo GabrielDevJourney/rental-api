@@ -10,24 +10,26 @@ import com.gabriel.rentacar.mapper.AccountMapper;
 import com.gabriel.rentacar.repository.AccountRepository;
 import com.gabriel.rentacar.utils.EmailValidation;
 import com.gabriel.rentacar.utils.PasswordValidation;
-import jakarta.transaction.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 @Service
 public class AccountService {
 	private final AccountRepository accountRepository;
 	private final AccountMapper accountMapper;
 	private final PasswordValidation passwordValidator;
-	private final static Logger logger = LoggerFactory.getLogger(AccountService.class);
+	private final EmailValidation emailValidator;
 
-	public AccountService(AccountRepository accountRepository, AccountMapper accountMapper, PasswordValidation passwordValidator) {
+	public AccountService(AccountRepository accountRepository, AccountMapper accountMapper,
+	                      PasswordValidation passwordValidator, EmailValidation emailValidator) {
 		this.accountRepository = accountRepository;
 		this.accountMapper = accountMapper;
 		this.passwordValidator = passwordValidator;
+		this.emailValidator = emailValidator;
 	}
 
 	//REST ENDPOINTS
@@ -58,19 +60,11 @@ public class AccountService {
 		accountDto.setPassword(passwordEncrypted);
 
 		AccountEntity accountEntity = accountMapper.toEntity(accountDto);
-
-		//for jwt generate token be able to get role based on email
-		if (accountDto.getEmail().contains("admin")) {
-			accountEntity.setUserRole(UserRole.ADMIN);
-		} else if (accountDto.getEmail().contains("manager")) {
-			accountEntity.setUserRole(UserRole.MANAGER);
-		} else {
-			accountEntity.setUserRole(UserRole.USER);
-		}
-
+		accountEntity.setUserRole(UserRole.USER);
 		accountRepository.save(accountEntity);
 	}
 
+	@Transactional
 	public void confirmAccount(String email, String password) {
 		AccountEntity account = accountRepository.findByEmail(email).orElseThrow(() -> new ValidationException("Not " +
 				"account found", "Account not found"));
@@ -88,6 +82,7 @@ public class AccountService {
 		accountRepository.save(account);
 	}
 
+	@Transactional
 	public void deactivateAccount(Long id) {
 		AccountEntity account = getAccountEntityById(id);
 
@@ -99,11 +94,13 @@ public class AccountService {
 		accountRepository.save(account);
 	}
 
+	@Transactional
 	public void deleteAccount(Long id) {
 		AccountEntity account = getAccountEntityById(id);
 		accountRepository.delete(account);
 	}
 
+	@Transactional
 	public void updateFirstNameAndLastName(Long id, FirstLastNameDto firstLastNameDto) {
 		validateNotNull(firstLastNameDto, "nameData");
 		AccountEntity accountEntity = getAccountEntityById(id);
@@ -118,6 +115,7 @@ public class AccountService {
 		accountRepository.save(accountEntity);
 	}
 
+	@Transactional
 	public void updateFullAccountDetails(Long id, AccountDto accountDto) {
 		validateNotNull(accountDto, "account");
 		AccountEntity accountEntity = getAccountEntityById(id);
@@ -151,6 +149,7 @@ public class AccountService {
 		accountRepository.save(accountEntity);
 	}
 
+	@Transactional
 	public void updateAccountAge(Long id, Integer age) {
 		AccountEntity accountEntity = getAccountEntityById(id);
 		validateAge(age, accountEntity.getEmail());
@@ -158,6 +157,7 @@ public class AccountService {
 		accountRepository.save(accountEntity);
 	}
 
+	@Transactional
 	public void updateAccountEmail(Long id, String email) {
 		AccountEntity accountEntity = getAccountEntityById(id);
 		String normalizedEmail = validateEmailFormatAndNormalize(email);
@@ -171,6 +171,7 @@ public class AccountService {
 		accountRepository.save(accountEntity);
 	}
 
+	@Transactional
 	public void updateAccountPhoneNumber(Long id, String phoneNumber) {
 		AccountEntity accountEntity = getAccountEntityById(id);
 		String validatedPhone = validatePhoneNumberFormat(phoneNumber);
@@ -184,6 +185,13 @@ public class AccountService {
 		accountRepository.save(accountEntity);
 	}
 
+
+	@Transactional
+	public void updateAccountRole(Long id, UserRole newRole) {
+		AccountEntity account = getAccountEntityById(id);
+		account.setUserRole(newRole);
+		accountRepository.save(account);
+	}
 
 	public AccountDto getAccountDtoById(Long id) {
 		return accountMapper.toDto(getAccountEntityById(id));
@@ -206,15 +214,10 @@ public class AccountService {
 				.toList();
 	}
 
-	public List<AccountDto> getAllAccounts() {
-		List<AccountEntity> accounts = accountRepository.findAll();
-		return accountMapper.toDtoList(accounts);
-	}
-
-	// repo helper methods
-	private void save(AccountDto accountDto) {
-		accountRepository.save(accountMapper.toEntity(accountDto));
-
+	public List<AccountDto> getAllAccounts(int page, int size) {
+		return accountRepository.findAll(PageRequest.of(page, size))
+				.map(accountMapper::toDto)
+				.toList();
 	}
 
 	private boolean existsByEmail(String email) {
@@ -234,32 +237,30 @@ public class AccountService {
 
 	private void validateName(String name, String fieldName) {
 		if (name == null || name.trim().isEmpty()) {
-			throw new AccountInvalidNameFormat(fieldName, "Name cannot be empty");
+			throw new AccountInvalidNameFormatException(fieldName, "Name cannot be empty");
 		}
 
 		String trimmedName = name.trim();
 
 		// Length check
 		if (trimmedName.length() < 2) {
-			throw new AccountInvalidNameFormat(fieldName,
+			throw new AccountInvalidNameFormatException(fieldName,
 					String.format("%s is too short (minimum 2 characters)", fieldName));
 		}
 
 		if (trimmedName.length() > 50) {
-			throw new AccountInvalidNameFormat(fieldName,
+			throw new AccountInvalidNameFormatException(fieldName,
 					String.format("%s is too long (maximum 50 characters)", fieldName));
 		}
 
 		// Character check
 		if (!trimmedName.matches("^[a-zA-Z\\s'-]+$")) {
-			throw new AccountInvalidNameFormat(fieldName,
+			throw new AccountInvalidNameFormatException(fieldName,
 					String.format("%s can only contain letters, spaces, hyphens and apostrophes", fieldName));
 		}
 	}
 
 	private String validateEmailFormatAndNormalize(String email) {
-		EmailValidation emailValidator = new EmailValidation();
-
 		return emailValidator.validateEmailFormatAndNormalize(email);
 	}
 

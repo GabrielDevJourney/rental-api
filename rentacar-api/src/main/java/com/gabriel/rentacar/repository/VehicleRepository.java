@@ -7,11 +7,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
+@SuppressWarnings({"unused", "NullableProblems"})
 public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
 	boolean existsByPlate(String plate);
 
 	Optional<VehicleEntity> findByPlate(String plate);
 
-	List<VehicleEntity>findAllByStatus(VehicleStatus status);
+	List<VehicleEntity> findAllByStatus(VehicleStatus status);
 
 }

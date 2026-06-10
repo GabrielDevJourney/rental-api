@@ -8,13 +8,15 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
+@SuppressWarnings({"unused", "NullableProblems"})
 public interface RentalRepository extends JpaRepository<RentalEntity, Long> {
-	RentalEntity findByIdAndStatus(Long id, RentalStatus status);
-	RentalEntity findByAccountEntity_Id(Long accountId);
-	RentalEntity findByVehicleEntity_Id(Long vehicleId);
-	RentalEntity findByVehicleEntity_IdAndStatus(Long vehicleId, RentalStatus status);
-	RentalEntity findByAccountEntity_IdAndStatus(Long accountId, RentalStatus status);
+	Optional<RentalEntity> findByIdAndStatus(Long id, RentalStatus status);
+	Optional<RentalEntity> findByAccountEntity_Id(Long accountId);
+	Optional<RentalEntity> findByVehicleEntity_Id(Long vehicleId);
+	Optional<RentalEntity> findByVehicleEntity_IdAndStatus(Long vehicleId, RentalStatus status);
+	Optional<RentalEntity> findByAccountEntity_IdAndStatus(Long accountId, RentalStatus status);
 
 	List<RentalEntity> findAllByAccountEntity_Id(Long accountId);
 	List<RentalEntity> findAllByVehicleEntity_Id(Long vehicleId);

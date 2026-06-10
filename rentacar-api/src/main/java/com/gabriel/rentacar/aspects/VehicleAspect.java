@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
+@SuppressWarnings({"unused", "SpellCheckingInspection"})
 public class VehicleAspect {
 	private static final Logger logger = LoggerFactory.getLogger(VehicleAspect.class);
 

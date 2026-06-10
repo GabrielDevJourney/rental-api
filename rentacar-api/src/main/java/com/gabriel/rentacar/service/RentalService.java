@@ -17,12 +17,14 @@ import com.gabriel.rentacar.repository.RentalRepository;
 import com.gabriel.rentacar.repository.VehicleRepository;
 import com.gabriel.rentacar.utils.DateValidation;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 @Service
 public class RentalService {
 	private final RentalRepository rentalRepository;
@@ -33,23 +35,24 @@ public class RentalService {
 	private final DateValidation dateValidator;
 
 	public RentalService(RentalRepository rentalRepository, RentalMapper rentalMapper, VehicleRepository vehicleRepository,
-	                     AccountRepository accountRepository, VehicleService vehicleService,DateValidation dateValidator) {
+	                     AccountRepository accountRepository, VehicleService vehicleService, DateValidation dateValidator) {
 		this.rentalRepository = rentalRepository;
 		this.rentalMapper = rentalMapper;
 		this.vehicleRepository = vehicleRepository;
-		this.accountRepository =accountRepository;
+		this.accountRepository = accountRepository;
 		this.vehicleService = vehicleService;
 		this.dateValidator = dateValidator;
 	}
 
-	public void createRenting(RentalRequestDto rentalRequestDto){
+	@Transactional
+	public void createRenting(RentalRequestDto rentalRequestDto) {
 		Long vehicleId = rentalRequestDto.getVehicleId();
 		Long accountId = rentalRequestDto.getAccountId();
 
-		VehicleEntity vehicle =
-				vehicleRepository.findById(vehicleId).orElseThrow(() -> new VehicleNotFoundException(vehicleId));
-		AccountEntity account =
-				accountRepository.findById(accountId).orElseThrow(() -> new AccountNotFoundException(accountId));
+		VehicleEntity vehicle = vehicleRepository.findById(vehicleId)
+				.orElseThrow(() -> new VehicleNotFoundException(vehicleId));
+		AccountEntity account = accountRepository.findById(accountId)
+				.orElseThrow(() -> new AccountNotFoundException(accountId));
 
 		validateAccountIsActive(account);
 
@@ -62,7 +65,6 @@ public class RentalService {
 		vehicleService.updateVehicleStatusToRented(vehicle);
 
 		RentalEntity rentalEntity = rentalMapper.toEntityRequest(rentalRequestDto);
-
 		rentalEntity.setAccountEntity(account);
 		rentalEntity.setVehicleEntity(vehicle);
 		rentalEntity.setStartKilometers(vehicle.getCurrentKilometers());
@@ -70,6 +72,7 @@ public class RentalService {
 		rentalRepository.save(rentalEntity);
 	}
 
+	@Transactional
 	public void endRenting(Long id, int rentalReturnKilometers) {
 		RentalEntity rental = findActiveRentalById(id);
 
@@ -80,7 +83,7 @@ public class RentalService {
 		rental.setDateReturn(returnDate);
 		rental.setStatus(RentalStatus.COMPLETED);
 
-		double totalPrice = calculateRentFinalPrice(
+		BigDecimal totalPrice = calculateRentFinalPrice(
 				rental.getVehicleEntity().getDailyRate(),
 				rental.getDateStart(),
 				returnDate
@@ -96,80 +99,64 @@ public class RentalService {
 		rentalRepository.save(rental);
 	}
 
-	// Http methods for controller
-	public RentalResponseDto getRentingInfo(Long id){
-		RentalEntity rent = rentalRepository.findById(id).orElseThrow(() -> new RentalNotFoundException(id));
+	public RentalResponseDto getRentingInfo(Long id) {
+		RentalEntity rent = rentalRepository.findById(id)
+				.orElseThrow(() -> new RentalNotFoundException(id));
 		return rentalMapper.toDtoResponse(rent);
 	}
 
-	public RentalResponseDto getRentingInfoByVehicleId(Long id){
-		RentalEntity rent = rentalRepository.findByVehicleEntity_Id(id);
+	public RentalResponseDto getRentingInfoByVehicleId(Long id) {
+		RentalEntity rent = rentalRepository.findByVehicleEntity_Id(id)
+				.orElseThrow(() -> new RentalNotFoundException(id));
 		return rentalMapper.toDtoResponse(rent);
 	}
 
-	public RentalResponseDto getRentingInfoByAccountId(Long id){
-		RentalEntity rent = rentalRepository.findByAccountEntity_Id(id);
+	public RentalResponseDto getRentingInfoByAccountId(Long id) {
+		RentalEntity rent = rentalRepository.findByAccountEntity_Id(id)
+				.orElseThrow(() -> new RentalNotFoundException(id));
 		return rentalMapper.toDtoResponse(rent);
 	}
 
-	public RentalResponseDto getRentingInfoByVehicleIdAndStatus(Long id, RentalStatus status){
-		RentalEntity rent = rentalRepository.findByVehicleEntity_IdAndStatus(id,status);
-		if(rent.getStatus() != status){
-			return null;
-		}
-		return rentalMapper.toDtoResponse(rent);
+	public RentalResponseDto getRentingInfoByVehicleIdAndStatus(Long id, RentalStatus status) {
+		return rentalRepository.findByVehicleEntity_IdAndStatus(id, status)
+				.map(rentalMapper::toDtoResponse)
+				.orElseThrow(() -> new RentalNotFoundException(id));
 	}
 
-	public RentalResponseDto getRentingInfoByAccountIdAndStatus(Long id, RentalStatus status){
-		RentalEntity rent = rentalRepository.findByAccountEntity_IdAndStatus(id,status);
-		if(rent.getStatus() != status){
-			return null;
-		}
-		return rentalMapper.toDtoResponse(rent);
+	public RentalResponseDto getRentingInfoByAccountIdAndStatus(Long id, RentalStatus status) {
+		return rentalRepository.findByAccountEntity_IdAndStatus(id, status)
+				.map(rentalMapper::toDtoResponse)
+				.orElseThrow(() -> new RentalNotFoundException(id));
 	}
 
-	public List<RentalResponseDto> getAllRentalsForAccount(Long id){
-		List<RentalEntity> rentals = rentalRepository.findAllByAccountEntity_Id(id);
-		List<RentalResponseDto> rentalsDtos = new ArrayList<>();
-		for(RentalEntity entity : rentals){
-			rentalsDtos.add(rentalMapper.toDtoResponse(entity));
-		}
-		return rentalsDtos;
+	public List<RentalResponseDto> getAllRentalsForAccount(Long id) {
+		return rentalRepository.findAllByAccountEntity_Id(id).stream()
+				.map(rentalMapper::toDtoResponse)
+				.toList();
 	}
 
-	public List<RentalResponseDto> getAllRentalsForVehicle(Long id){
-		List<RentalEntity> rentals = rentalRepository.findAllByVehicleEntity_Id(id);
-		List<RentalResponseDto> rentalsDtos = new ArrayList<>();
-		for(RentalEntity entity : rentals){
-			rentalsDtos.add(rentalMapper.toDtoResponse(entity));
-		}
-		return rentalsDtos;
+	public List<RentalResponseDto> getAllRentalsForVehicle(Long id) {
+		return rentalRepository.findAllByVehicleEntity_Id(id).stream()
+				.map(rentalMapper::toDtoResponse)
+				.toList();
 	}
 
-	public List<RentalResponseDto> getAllRentalsOfStatus(RentalStatus status){
-		List<RentalEntity> rentals = rentalRepository.findAllByStatus(status);
-		List<RentalResponseDto> rentalsDtos = new ArrayList<>();
-		for(RentalEntity entity : rentals){
-			rentalsDtos.add(rentalMapper.toDtoResponse(entity));
-		}
-		return rentalsDtos;
+	public List<RentalResponseDto> getAllRentalsOfStatus(RentalStatus status) {
+		return rentalRepository.findAllByStatus(status).stream()
+				.map(rentalMapper::toDtoResponse)
+				.toList();
 	}
-
 
 	//* PRIVATE HELPER METHODS
-	private double calculateRentFinalPrice(double vehicleDailyPrice,LocalDate startDate, LocalDate endDate){
 
-		 return  vehicleDailyPrice * calculateRentTotalDays(startDate,endDate);
+	private BigDecimal calculateRentFinalPrice(BigDecimal vehicleDailyPrice, LocalDate startDate, LocalDate endDate) {
+		long days = startDate.until(endDate, ChronoUnit.DAYS);
+		return vehicleDailyPrice.multiply(BigDecimal.valueOf(days));
 	}
-	private long calculateRentTotalDays(LocalDate startDate, LocalDate endDate){
-		return startDate.until(endDate, ChronoUnit.DAYS);
-	}
+
 	private RentalEntity findActiveRentalById(Long id) {
-		RentalEntity rental = rentalRepository.findByIdAndStatus(id, RentalStatus.ACTIVE);
-		if (rental == null) {
-			throw new RentalNotFoundException(id);
-		}
-		return rental;
+		return rentalRepository.findByIdAndStatus(id, RentalStatus.ACTIVE)
+				.orElseThrow(() -> new RentalNotFoundException(id));
 	}
 
 	private void validateReturnKilometers(RentalEntity rental, int returnKilometers) {
@@ -178,11 +165,9 @@ public class RentalService {
 		}
 	}
 
-	private void validateAccountIsActive(AccountEntity account){
-		if(account.isActive()){
-			return;
+	private void validateAccountIsActive(AccountEntity account) {
+		if (!account.isActive()) {
+			throw new AccountNotActiveException(account.getId());
 		}
-		throw new AccountNotActiveException(account.getId());
 	}
-
 }

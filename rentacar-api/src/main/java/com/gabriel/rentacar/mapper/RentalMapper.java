@@ -8,6 +8,7 @@ import org.mapstruct.Mapping;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 @Mapper(componentModel = "spring")
 public interface RentalMapper {
 	@Mapping(target = "accountEntity.id", source = "accountId")
@@ -26,6 +27,7 @@ public interface RentalMapper {
 	@Mapping(target = "dateReturn", source = "dateReturn")
 	@Mapping(target = "startKilometers", source = "startKilometers")
 	@Mapping(target = "endKilometers", source = "endKilometers")
+	@Mapping(target = "totalPrice", source = "totalPrice")
 	@Mapping(target = "rentalStatus", source = "status")
 	RentalResponseDto toDtoResponse(RentalEntity entity);
 

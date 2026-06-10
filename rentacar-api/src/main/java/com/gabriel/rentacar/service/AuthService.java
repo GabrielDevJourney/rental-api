@@ -6,7 +6,6 @@ import com.gabriel.rentacar.dto.auth.AuthRequestDto;
 import com.gabriel.rentacar.dto.auth.AuthResponseDto;
 import com.gabriel.rentacar.dto.auth.ChangePasswordDto;
 import com.gabriel.rentacar.entity.AccountEntity;
-import com.gabriel.rentacar.enums.UserRole;
 import com.gabriel.rentacar.exception.accountException.AccountInvalidAuthException;
 import com.gabriel.rentacar.exception.accountException.AccountInvalidPasswordException;
 import com.gabriel.rentacar.exception.accountException.AccountNotActiveException;
@@ -18,10 +17,9 @@ import com.gabriel.rentacar.utils.JwtTokenUtil;
 import com.gabriel.rentacar.utils.PasswordValidation;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("unused")
 @Service
 public class AuthService {
 	private final AccountService accountService;
@@ -90,13 +88,6 @@ public class AuthService {
 
 	//* PRIVATE HELPER METHODS
 	private List<String> determineUserRoles(AccountEntity account) {
-		// Simple logic based on email for testing purposes
-		if (account.getEmail().contains("admin")) {
-			return Arrays.asList("ADMIN", "MANAGER", "USER");
-		} else if (account.getEmail().contains("manager")) {
-			return Arrays.asList("MANAGER", "USER");
-		} else {
-			return Collections.singletonList("USER");
-		}
+		return List.of(account.getUserRole().name());
 	}
 }

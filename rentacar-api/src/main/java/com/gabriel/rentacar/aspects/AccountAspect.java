@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
+@SuppressWarnings({"unused", "SpellCheckingInspection"})
 public class AccountAspect {
 	private static final Logger logger = LoggerFactory.getLogger(AccountAspect.class);
 
@@ -25,15 +26,14 @@ public class AccountAspect {
 		logger.info("Account created with success!");
 	}
 
-	@Before("execution(* com.gabriel.rentacar.service.AccountService.activateAccount(..)) && args" +
-			"(id)")
-	public void logBeforeActivateAccount(Long id) {
-		logger.info("Activating account with ID: {}",id);
+	@Before("execution(* com.gabriel.rentacar.service.AccountService.confirmAccount(..)) && args(email, password)")
+	public void logBeforeConfirmAccount(String email, @SuppressWarnings("unused") String password) {
+		logger.info("Confirming account with email: {}.", email);
 	}
 
-	@AfterReturning("execution(* com.gabriel.rentacar.service.AccountService.activateAccount(..))")
-	public void logAfterActivateAccount() {
-		logger.info("Account activated with success!");
+	@AfterReturning("execution(* com.gabriel.rentacar.service.AccountService.confirmAccount(..))")
+	public void logAfterConfirmAccount() {
+		logger.info("Account confirmed with success!");
 	}
 
 	@Before("execution(* com.gabriel.rentacar.service.AccountService.deactivateAccount(..)) && args" +
@@ -70,15 +70,13 @@ public class AccountAspect {
 		logger.info("Account name updated with success!");
 	}
 
-	@Before("execution(* com.gabriel.rentacar.service.AccountService.updateAccountAge(..)) && args(id," +
-			" age)")
-	public void updateAccountAge(Long id, Integer age) {
-		logger.info("Updating age {} for account with ID: {}.",
-				age,id);
+	@Before("execution(* com.gabriel.rentacar.service.AccountService.updateAccountAge(..)) && args(id, age)")
+	public void logBeforeUpdateAccountAge(Long id, Integer age) {
+		logger.info("Updating age {} for account with ID: {}.", age, id);
 	}
 
 	@AfterReturning("execution(* com.gabriel.rentacar.service.AccountService.updateAccountAge(..))")
-	public void updateAccountAge() {
+	public void logAfterUpdateAccountAge() {
 		logger.info("Account age updated with success!");
 	}
 
@@ -92,9 +90,9 @@ public class AccountAspect {
 		logger.info("Account phone number updated with success!");
 	}
 
-	@Before("execution(* com.gabriel.rentacar.service.AccountService.updateAccountPhoneNumber(..)) && args(id, phoneNumber)")
+	@Before("execution(* com.gabriel.rentacar.service.AccountService.updateAccountEmail(..)) && args(id, email)")
 	public void logBeforeUpdateAccountEmail(Long id, String email) {
-		logger.info("Updating email: {} account with ID : {}", email, id);
+		logger.info("Updating email: {} for account with ID: {}.", email, id);
 	}
 
 	@AfterReturning("execution(* com.gabriel.rentacar.service.AccountService.updateAccountEmail(..)) " +

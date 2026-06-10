@@ -2,11 +2,12 @@ package com.gabriel.rentacar.utils;
 
 import com.gabriel.rentacar.exception.vehicleException.VehicleInvalidDataException;
 import com.gabriel.rentacar.exception.vehicleException.VehicleInvalidPlateFormatException;
-import com.gabriel.rentacar.exception.vehicleException.VehicleInvalidYearOfManufacture;
+import com.gabriel.rentacar.exception.vehicleException.VehicleInvalidYearOfManufactureException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
+@SuppressWarnings({"unused", "SpellCheckingInspection"})
 @Component
 public class PlateValidation {
 	private String normalizePlate(String plate) {
@@ -57,53 +58,66 @@ public class PlateValidation {
 		}
 
 		for (int i = 0; i < 3; i++) {
-			String part = platePartsWithHyphen[i].trim();
-
-			if (part.length() != 2) {
-				throw new VehicleInvalidPlateFormatException(plate,
-						"Each plate segment must be exactly 2 characters");
-			}
-
-			// no carachters allowed
-			for (char character : part.toCharArray()) {
-				if (!(character >= 'A' && character <= 'Z') && !(character >= '0' && character <= '9')) {
-					throw new VehicleInvalidPlateFormatException(plate,
-							"Plate segments can only contain letters A-Z and numbers 0-9");
-				}
-			}
-
-			platePartsWithoutHyphens[i] = part;
+			platePartsWithoutHyphens[i] = validateAndNormalizePlatePart(platePartsWithHyphen[i], plate);
 		}
 
 		return platePartsWithoutHyphens[0] + "-" + platePartsWithoutHyphens[1] + "-" + platePartsWithoutHyphens[2];
 	}
-	public  String validatePlateFormat(String plate, int yearManufacture) {
-		String normalizedPlate = normalizePlate(plate);
 
-		if (yearManufacture > 2020) {
-			// AA-00-AA format
-			if (!normalizedPlate.matches("^[A-Z]{2}-[0-9]{2}-[A-Z]{2}$")) {
-				throw new VehicleInvalidPlateFormatException(
-						normalizedPlate,
-						"For vehicles after 2020, plate must be in AA-00-AA format"
-				);
+	private String validateAndNormalizePlatePart(String rawPart, String plate) {
+		String part = rawPart.trim();
+
+		if (part.length() != 2) {
+			throw new VehicleInvalidPlateFormatException(plate,
+					"Each plate segment must be exactly 2 characters");
+		}
+
+		// no invalid characters allowed
+		for (char character : part.toCharArray()) {
+			if (!(character >= 'A' && character <= 'Z') && !(character >= '0' && character <= '9')) {
+				throw new VehicleInvalidPlateFormatException(plate,
+						"Plate segments can only contain letters A-Z and numbers 0-9");
 			}
-		} else if (yearManufacture >= 2005) {
-			// 00-AA-00 format
-			if (!normalizedPlate.matches("^[0-9]{2}-[A-Z]{2}-[0-9]{2}$")) {
-				throw new VehicleInvalidPlateFormatException(
-						normalizedPlate,
-						"For vehicles after 2005, plate must be in 00-AA-00 format"
-				);
-			}
-		} else {
-			throw new VehicleInvalidYearOfManufacture(
+		}
+
+		return part;
+	}
+	public String validatePlateFormat(String plate, int yearManufacture) {
+		String normalizedPlate = normalizePlate(plate);
+		String[] expected = getExpectedPattern(yearManufacture);
+
+		if (expected == null) {
+			throw new VehicleInvalidYearOfManufactureException(
 					yearManufacture,
 					(LocalDate.now().getYear() - 20),
 					LocalDate.now().getYear()
 			);
 		}
 
+		if (!normalizedPlate.matches(expected[0])) {
+			throw new VehicleInvalidPlateFormatException(normalizedPlate, expected[1]);
+		}
+
 		return normalizedPlate;
+	}
+
+	/**
+	 * Returns a two-element array where [0] is the regex pattern and [1] is the error message
+	 * for the expected plate format based on the year of manufacture.
+	 * Returns null if the year is not supported.
+	 */
+	private String[] getExpectedPattern(int yearManufacture) {
+		if (yearManufacture > 2020) {
+			return new String[]{
+					"^[A-Z]{2}-[0-9]{2}-[A-Z]{2}$",
+					"For vehicles after 2020, plate must be in AA-00-AA format"
+			};
+		} else if (yearManufacture >= 2005) {
+			return new String[]{
+					"^[0-9]{2}-[A-Z]{2}-[0-9]{2}$",
+					"For vehicles after 2005, plate must be in 00-AA-00 format"
+			};
+		}
+		return null;
 	}
 }

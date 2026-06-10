@@ -5,6 +5,7 @@ import com.gabriel.rentacar.exception.accountException.AccountInvalidEmailFormat
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.stereotype.Component;
 
+@SuppressWarnings("unused")
 @Component
 public class EmailValidation {
 

@@ -10,6 +10,7 @@ import org.mapstruct.Named;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 @Mapper(componentModel = "spring")
 public interface AccountMapper {
 

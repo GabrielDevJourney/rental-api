@@ -7,6 +7,9 @@ import com.gabriel.rentacar.exception.vehicleException.*;
 import com.gabriel.rentacar.mapper.VehicleMapper;
 import com.gabriel.rentacar.repository.VehicleRepository;
 import com.gabriel.rentacar.utils.PlateValidation;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +18,7 @@ import java.time.Year;
 import java.util.List;
 import java.util.Optional;
 
+@SuppressWarnings({"unused", "NullableProblems"})
 @Service
 public class VehicleService {
 	private final VehicleRepository vehicleRepository;
@@ -82,14 +86,14 @@ public class VehicleService {
 	}
 
 	public VehicleDto getVehicleById(Long vehicleId){
-		VehicleEntity vehicleEntity = vehicleRepository.findById(vehicleId).orElseThrow(() -> {
-			throw new VehicleNotFoundException(vehicleId);
-		});
+		VehicleEntity vehicleEntity = vehicleRepository.findById(vehicleId)
+				.orElseThrow(() -> new VehicleNotFoundException(vehicleId));
 		return vehicleMapper.toDto(vehicleEntity);
 	}
 
-	public List<VehicleDto> getAllVehicles(){
-		return vehicleMapper.toDtoList(vehicleRepository.findAll());
+	public Page<VehicleDto> getAllVehicles(int page, int size, String sort) {
+		PageRequest pageable = PageRequest.of(page, size, Sort.by(sort));
+		return vehicleRepository.findAll(pageable).map(vehicleMapper::toDto);
 	}
 
 	//* HELPERS PUBLIC METHODS
@@ -133,12 +137,10 @@ public class VehicleService {
 		validateNotNull(vehicle, "vehicle");
 		validateStatusTransition(vehicle.getStatus(), VehicleStatus.AVAILABLE, vehicle.getId());
 
-		vehicle.setStatus(VehicleStatus.AVAILABLE);
-
 		if (vehicle.getStatus() == VehicleStatus.MAINTENANCE) {
 			vehicle.setMaintenanceEndDate(null);
 		}
-
+		vehicle.setStatus(VehicleStatus.AVAILABLE);
 		vehicleRepository.save(vehicle);
 	}
 
@@ -178,7 +180,7 @@ public class VehicleService {
 		int maxYear = Year.now().getValue();
 		int minYear = maxYear - 20;
 		if(vehicleYear > maxYear || vehicleYear < minYear){
-			throw new VehicleInvalidYearOfManufacture(vehicleYear,minYear, maxYear);
+			throw new VehicleInvalidYearOfManufactureException(vehicleYear,minYear, maxYear);
 		}
 	}
 

@@ -1,6 +1,7 @@
 package com.gabriel.rentacar.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
@@ -8,6 +9,7 @@ import io.swagger.v3.oas.models.Components;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+@SuppressWarnings("unused")
 @Configuration
 public class OpenApiConfig {
 
@@ -22,7 +24,15 @@ public class OpenApiConfig {
 										.bearerFormat("JWT")
 						)
 				)
-				.info(new Info().title("RentaCar API"))
-				.addSecurityItem(new SecurityRequirement().addList("bearer-jwt")); // Enforce security requirement
+				.info(new Info()
+						.title("Exotic Car Rental API")
+						.description("Backend API for an exotic/luxury car rental platform. Supports account management, fleet management, rental lifecycle, and a Credits wallet system.")
+						.version("1.0.0")
+						.contact(new Contact()
+								.name("Gabriel Pereira")
+								.url("https://github.com/GabrielDevJourney/rental-api")
+						)
+				)
+				.addSecurityItem(new SecurityRequirement().addList("bearer-jwt"));
 	}
 }

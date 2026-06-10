@@ -7,6 +7,7 @@ import org.mapstruct.Mapping;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 @Mapper(componentModel = "spring")
 public interface VehicleMapper {
 	VehicleDto toDto(VehicleEntity entity);

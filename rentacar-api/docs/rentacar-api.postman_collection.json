@@ -1,0 +1,1211 @@
+{
+  "info": {
+    "_postman_id": "rentacar-api-collection-v1",
+    "name": "Rentacar API",
+    "description": "Run folders in order: Auth → Accounts → Vehicles → Rentals.\nAuth folder must run first to populate adminToken, managerToken, and userToken variables.\n\nSeeded accounts: admin@rentacar.com (ADMIN), manager@rentacar.com (MANAGER), user@rentacar.com (USER), inactive@rentacar.com (inactive USER)\nSeeded vehicles: IDs 1–5 (Ferrari AVAILABLE, Lamborghini AVAILABLE, Porsche MAINTENANCE, Bentley RENTED, Aston Martin AVAILABLE)\nSeeded rentals: ID 1 (COMPLETED), ID 2 (ACTIVE)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string", "enabled": true },
+    { "key": "adminToken", "value": "", "type": "string", "enabled": true },
+    { "key": "managerToken", "value": "", "type": "string", "enabled": true },
+    { "key": "userToken", "value": "", "type": "string", "enabled": true },
+    { "key": "rentalStartDate", "value": "", "type": "string", "enabled": true },
+    { "key": "rentalEndDate", "value": "", "type": "string", "enabled": true }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Public endpoints — no token required. Run all login requests first to populate tokens.",
+      "item": [
+        {
+          "name": "Login - Admin",
+          "event": [
+            {
+              "id": "evt-auth-admin-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Token present', () => pm.expect(pm.response.json().data.token).to.not.be.empty);",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('adminToken', pm.response.json().data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@rentacar.com\",\n  \"password\": \"Admin@1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Manager",
+          "event": [
+            {
+              "id": "evt-auth-manager-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('managerToken', pm.response.json().data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manager@rentacar.com\",\n  \"password\": \"Manager@1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - User",
+          "event": [
+            {
+              "id": "evt-auth-user-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('userToken', pm.response.json().data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@rentacar.com\",\n  \"password\": \"User@1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register New Account",
+          "event": [
+            {
+              "id": "evt-auth-register-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@email.com\",\n  \"password\": \"NewUser@1234!\",\n  \"phoneNumber\": \"912345678\",\n  \"age\": 28\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "event": [
+            {
+              "id": "evt-auth-changepw-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userToken}}", "type": "string" }]
+            },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"User@1234!\",\n  \"newPassword\": \"NewPass@5678!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password/3",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password", "3"]
+            }
+          }
+        },
+        {
+          "name": "Negative - Login Wrong Password",
+          "event": [
+            {
+              "id": "evt-auth-neg-wrongpw-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns error (not 200)', () => pm.response.to.not.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@rentacar.com\",\n  \"password\": \"WrongPassword!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Negative - Login Inactive Account",
+          "event": [
+            {
+              "id": "evt-auth-neg-inactive-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns error (not 200)', () => pm.response.to.not.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"inactive@rentacar.com\",\n  \"password\": \"Inactive@1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "description": "Requires ADMIN token. Run Auth folder first.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "GET All Accounts",
+          "event": [
+            {
+              "id": "evt-acc-getall-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns list', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Account by ID",
+          "event": [
+            {
+              "id": "evt-acc-getbyid-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Is admin', () => pm.expect(pm.response.json().data.email).to.eql('admin@rentacar.com'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "1"]
+            }
+          }
+        },
+        {
+          "name": "GET Deactivated Accounts",
+          "event": [
+            {
+              "id": "evt-acc-deactivated-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/deactivated",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "deactivated"]
+            }
+          }
+        },
+        {
+          "name": "GET Deactivated Names",
+          "event": [
+            {
+              "id": "evt-acc-deactivated-names-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/deactivated/names",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "deactivated", "names"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Update Name",
+          "event": [
+            {
+              "id": "evt-acc-updatename-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/3/names",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "3", "names"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Update Role (ADMIN only)",
+          "event": [
+            {
+              "id": "evt-acc-updaterole-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "\"MANAGER\"",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/3/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "3", "role"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Update Age",
+          "event": [
+            {
+              "id": "evt-acc-updateage-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "30",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/3/age",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "3", "age"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Deactivate Account",
+          "event": [
+            {
+              "id": "evt-acc-deactivate-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/3/deactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "3", "deactivate"]
+            }
+          }
+        },
+        {
+          "name": "Negative - GET Account Not Found",
+          "event": [
+            {
+              "id": "evt-acc-neg-notfound-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "999"]
+            }
+          }
+        },
+        {
+          "name": "Negative - Update Role as Manager (403)",
+          "event": [
+            {
+              "id": "evt-acc-neg-role403-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{managerToken}}", "type": "string" }]
+            },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "\"USER\"",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/1/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "1", "role"]
+            }
+          }
+        },
+        {
+          "name": "Negative - No Token (401)",
+          "event": [
+            {
+              "id": "evt-acc-neg-notoken-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vehicles",
+      "description": "Most endpoints require ADMIN/MANAGER token. GET all is accessible by USER.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "GET All Vehicles (as User)",
+          "event": [
+            {
+              "id": "evt-veh-getall-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has content', () => pm.expect(pm.response.json().data.content).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Vehicle by ID",
+          "event": [
+            {
+              "id": "evt-veh-getbyid-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Is Ferrari', () => pm.expect(pm.response.json().data.brand).to.eql('Ferrari'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/search/id/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "search", "id", "1"]
+            }
+          }
+        },
+        {
+          "name": "GET Vehicle by Plate",
+          "event": [
+            {
+              "id": "evt-veh-getbyplate-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/search/plate/AA-00-BB",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "search", "plate", "AA-00-BB"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Vehicle (ADMIN only)",
+          "event": [
+            {
+              "id": "evt-veh-create-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate\": \"FF-55-GG\",\n  \"brand\": \"McLaren\",\n  \"model\": \"720S\",\n  \"color\": \"Orange\",\n  \"yearManufacture\": 2023,\n  \"dailyRate\": 800.00,\n  \"currentKilometers\": 1500,\n  \"maintenanceKilometers\": 0\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Vehicle Status - Valid (AVAILABLE → MAINTENANCE)",
+          "event": [
+            {
+              "id": "evt-veh-status-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/1/status/MAINTENANCE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "1", "status", "MAINTENANCE"]
+            }
+          }
+        },
+        {
+          "name": "Negative - GET Unknown Plate (404)",
+          "event": [
+            {
+              "id": "evt-veh-neg-unknownplate-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/search/plate/ZZ-99-ZZ",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "search", "plate", "ZZ-99-ZZ"]
+            }
+          }
+        },
+        {
+          "name": "Negative - Invalid Status Transition RENTED → DISABLE",
+          "event": [
+            {
+              "id": "evt-veh-neg-badtransition-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns error (not 200)', () => pm.response.to.not.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/4/status/DISABLE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "4", "status", "DISABLE"]
+            }
+          }
+        },
+        {
+          "name": "Negative - Create Vehicle as Manager (403)",
+          "event": [
+            {
+              "id": "evt-veh-neg-create403-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{managerToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate\": \"GG-66-HH\",\n  \"brand\": \"Ferrari\",\n  \"model\": \"Roma\",\n  \"color\": \"Blue\",\n  \"yearManufacture\": 2022,\n  \"dailyRate\": 750.00,\n  \"currentKilometers\": 2000,\n  \"maintenanceKilometers\": 0\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rentals",
+      "description": "All endpoints require ADMIN or MANAGER token. Run Auth folder first.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "GET Rental by ID - Completed (1)",
+          "event": [
+            {
+              "id": "evt-rent-completed-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Is completed', () => pm.expect(pm.response.json().data.rentalStatus).to.eql('COMPLETED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "1"]
+            }
+          }
+        },
+        {
+          "name": "GET Rental by ID - Active (2)",
+          "event": [
+            {
+              "id": "evt-rent-active-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Is active', () => pm.expect(pm.response.json().data.rentalStatus).to.eql('ACTIVE'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "2"]
+            }
+          }
+        },
+        {
+          "name": "GET Rentals by Vehicle ID (Bentley - 4)",
+          "event": [
+            {
+              "id": "evt-rent-byvehicle-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/vehicle/4",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "vehicle", "4"]
+            }
+          }
+        },
+        {
+          "name": "GET Rentals by Account ID (Manager - 2)",
+          "event": [
+            {
+              "id": "evt-rent-byaccount-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/account/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "account", "2"]
+            }
+          }
+        },
+        {
+          "name": "GET All ACTIVE Rentals",
+          "event": [
+            {
+              "id": "evt-rent-allactive-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/all/ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "all", "ACTIVE"]
+            }
+          }
+        },
+        {
+          "name": "GET All COMPLETED Rentals",
+          "event": [
+            {
+              "id": "evt-rent-allcompleted-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/all/COMPLETED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "all", "COMPLETED"]
+            }
+          }
+        },
+        {
+          "name": "GET Full Vehicle History (Ferrari - 1)",
+          "event": [
+            {
+              "id": "evt-rent-vehhistory-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns list', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/vehicle/all/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "vehicle", "all", "1"]
+            }
+          }
+        },
+        {
+          "name": "GET Full Account History (User - 3)",
+          "event": [
+            {
+              "id": "evt-rent-acchistory-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns list', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/account/all/3",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "account", "all", "3"]
+            }
+          }
+        },
+        {
+          "name": "GET Vehicle + Status Filter (Bentley ACTIVE)",
+          "event": [
+            {
+              "id": "evt-rent-vehstatusfilter-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/vehicle/4/ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "vehicle", "4", "ACTIVE"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Rental - Valid (Lamborghini / Admin)",
+          "event": [
+            {
+              "id": "evt-rent-create-prereq",
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const today = new Date();",
+                  "const start = new Date(today); start.setDate(today.getDate() + 2);",
+                  "const end = new Date(today); end.setDate(today.getDate() + 6);",
+                  "const fmt = d => d.toISOString().slice(0, 10);",
+                  "pm.collectionVariables.set('rentalStartDate', fmt(start));",
+                  "pm.collectionVariables.set('rentalEndDate', fmt(end));"
+                ]
+              }
+            },
+            {
+              "id": "evt-rent-create-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": 1,\n  \"vehicleId\": 2,\n  \"dateStart\": \"{{rentalStartDate}}\",\n  \"dateEnd\": \"{{rentalEndDate}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals"]
+            }
+          }
+        },
+        {
+          "name": "PATCH End Rental - Valid (ID 2, km 8500)",
+          "event": [
+            {
+              "id": "evt-rent-endvalid-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/return/2/8500",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "return", "2", "8500"]
+            }
+          }
+        },
+        {
+          "name": "Negative - GET Vehicle+Status No Match (Ferrari ACTIVE → 404)",
+          "event": [
+            {
+              "id": "evt-rent-neg-nomatch-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/vehicle/1/ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "vehicle", "1", "ACTIVE"]
+            }
+          }
+        },
+        {
+          "name": "Negative - Create Rental Past Start Date",
+          "event": [
+            {
+              "id": "evt-rent-neg-pastdate-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns error (not 2xx)', () => pm.expect(pm.response.code).to.not.be.within(200, 299));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": 1,\n  \"vehicleId\": 5,\n  \"dateStart\": \"2020-01-01\",\n  \"dateEnd\": \"2020-01-05\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals"]
+            }
+          }
+        },
+        {
+          "name": "Negative - Create Rental Period > 30 Days",
+          "event": [
+            {
+              "id": "evt-rent-neg-30days-prereq",
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const today = new Date();",
+                  "const start = new Date(today); start.setDate(today.getDate() + 1);",
+                  "const end = new Date(today); end.setDate(today.getDate() + 32);",
+                  "const fmt = d => d.toISOString().slice(0, 10);",
+                  "pm.collectionVariables.set('longStart', fmt(start));",
+                  "pm.collectionVariables.set('longEnd', fmt(end));"
+                ]
+              }
+            },
+            {
+              "id": "evt-rent-neg-30days-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns error (not 2xx)', () => pm.expect(pm.response.code).to.not.be.within(200, 299));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": 1,\n  \"vehicleId\": 5,\n  \"dateStart\": \"{{longStart}}\",\n  \"dateEnd\": \"{{longEnd}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals"]
+            }
+          }
+        },
+        {
+          "name": "Negative - Create Rental Inactive Account",
+          "event": [
+            {
+              "id": "evt-rent-neg-inactive-prereq",
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const today = new Date();",
+                  "const start = new Date(today); start.setDate(today.getDate() + 3);",
+                  "const end = new Date(today); end.setDate(today.getDate() + 7);",
+                  "const fmt = d => d.toISOString().slice(0, 10);",
+                  "pm.collectionVariables.set('inactiveStart', fmt(start));",
+                  "pm.collectionVariables.set('inactiveEnd', fmt(end));"
+                ]
+              }
+            },
+            {
+              "id": "evt-rent-neg-inactive-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns error (not 2xx)', () => pm.expect(pm.response.code).to.not.be.within(200, 299));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": 4,\n  \"vehicleId\": 5,\n  \"dateStart\": \"{{inactiveStart}}\",\n  \"dateEnd\": \"{{inactiveEnd}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals"]
+            }
+          }
+        },
+        {
+          "name": "Negative - End Rental Bad Kilometers",
+          "event": [
+            {
+              "id": "evt-rent-neg-badkm-test",
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns error (not 2xx)', () => pm.expect(pm.response.code).to.not.be.within(200, 299));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/rentals/return/1/100",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rentals", "return", "1", "100"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
